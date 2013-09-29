@@ -33,8 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 import static com.xebialabs.overthere.ConnectionOptions.OPERATING_SYSTEM;
 import static com.xebialabs.overthere.ConnectionOptions.TEMPORARY_DIRECTORY_PATH;
@@ -114,38 +112,7 @@ public class LocalConnection extends BaseOverthereConnection implements Overther
                 pb.directory(((LocalFile) workingDirectory).getFile());
             }
             final Process p = pb.start();
-            return new OverthereProcess() {
-
-                @Override
-                public OutputStream getStdin() {
-                    return p.getOutputStream();
-                }
-
-                @Override
-                public InputStream getStdout() {
-                    return p.getInputStream();
-                }
-
-                @Override
-                public InputStream getStderr() {
-                    return p.getErrorStream();
-                }
-
-                @Override
-                public int waitFor() throws InterruptedException {
-                    return p.waitFor();
-                }
-
-                @Override
-                public void destroy() {
-                    p.destroy();
-                }
-                
-                @Override
-                public int exitValue() {
-                    return p.exitValue();
-                }
-            };
+            return new LocalProcess(p);
         } catch (IOException exc) {
             throw new RuntimeIOException("Cannot start process for " + commandLine, exc);
         }

@@ -30,16 +30,20 @@ import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.CIFS_PORT;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.CONNECTION_TYPE;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_CIFS_PORT;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_TELNET_PORT;
+import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_CONTEXT;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_ENABLE_HTTPS;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_HTTPS_PORT;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_HTTP_PORT;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.PATH_SHARE_MAPPINGS;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.PATH_SHARE_MAPPINGS_DEFAULT;
+import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.WINRM_CONTEXT;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.WINRM_ENABLE_HTTPS;
 import static java.net.InetSocketAddress.createUnresolved;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbFile;
@@ -51,6 +55,7 @@ import com.xebialabs.overthere.ConnectionOptions;
 import com.xebialabs.overthere.Overthere;
 import com.xebialabs.overthere.OverthereFile;
 import com.xebialabs.overthere.RuntimeIOException;
+import com.xebialabs.overthere.cifs.winrm.WinRmRuntimeIOException;
 import com.xebialabs.overthere.spi.AddressPortMapper;
 import com.xebialabs.overthere.spi.BaseOverthereConnection;
 
@@ -112,10 +117,10 @@ public abstract class CifsConnection extends BaseOverthereConnection {
         case TELNET:
             return DEFAULT_TELNET_PORT;
         case WINRM:
+        case WINRS:
             if (!options.getBoolean(WINRM_ENABLE_HTTPS, DEFAULT_WINRM_ENABLE_HTTPS)) {
                 return DEFAULT_WINRM_HTTP_PORT;
-            }
-            else {
+            } else {
                 return DEFAULT_WINRM_HTTPS_PORT;
             }
         default:
@@ -157,7 +162,7 @@ public abstract class CifsConnection extends BaseOverthereConnection {
     private String encodeAsSmbUrl(String hostPath) {
         try {
             String smbUrl = encoder.toSmbUrl(hostPath);
-            logger.trace("Encoded Windows host path {} to SMB URL {}", hostPath, maskSmbUrl(smbUrl));
+            logger.trace("Encoded Windows host path [{}] to SMB URL [{}]", hostPath, maskSmbUrl(smbUrl));
             return smbUrl;
         } catch (IllegalArgumentException exception) {
             throw new RuntimeIOException(exception);
@@ -166,6 +171,16 @@ public abstract class CifsConnection extends BaseOverthereConnection {
 
     private String maskSmbUrl(String smbUrl) {
         return smbUrl.replace(password, "********");
+    }
+
+    protected URL createWinrmURL(ConnectionOptions options) {
+        final String scheme = options.getBoolean(WINRM_ENABLE_HTTPS, DEFAULT_WINRM_ENABLE_HTTPS) ? "https" : "http";
+        final String context = options.get(WINRM_CONTEXT, DEFAULT_WINRM_CONTEXT);
+        try {
+            return new URL(scheme, address, port, context);
+        } catch (MalformedURLException e) {
+            throw new WinRmRuntimeIOException("Cannot build a new URL for " + this, e);
+        }
     }
 
     @Override

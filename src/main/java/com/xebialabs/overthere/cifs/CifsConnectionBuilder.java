@@ -33,6 +33,7 @@ import com.xebialabs.overthere.ConnectionOptions;
 import com.xebialabs.overthere.OverthereConnection;
 import com.xebialabs.overthere.cifs.telnet.CifsTelnetConnection;
 import com.xebialabs.overthere.cifs.winrm.CifsWinRmConnection;
+import com.xebialabs.overthere.cifs.winrs.CifsWinrsConnection;
 import com.xebialabs.overthere.spi.AddressPortMapper;
 import com.xebialabs.overthere.spi.OverthereConnectionBuilder;
 import com.xebialabs.overthere.spi.Protocol;
@@ -211,6 +212,22 @@ public class CifsConnectionBuilder implements OverthereConnectionBuilder {
      */
     public static final String DEFAULT_WINRM_TIMEOUT = "PT60.000S";
 
+    public static final String WINRS_NOECHO = "winrsNoecho";
+
+    public static final boolean DEFAULT_WINRS_NOECHO = false;
+
+    public static final String WINRS_NOPROFILE = "winrsNoprofile";
+    
+    public static final boolean DEFAULT_WINRS_NOPROFILE = false;
+    
+    public static final String WINRS_ALLOW_DELEGATE = "winrsAllowDelegate";
+    
+    public static final boolean DEFAULT_WINRS_ALLOW_DELEGATE = false;
+
+    public static final String WINRS_COMPRESSION = "winrsCompression";
+    
+    public static final boolean DEFAULT_WINRS_COMPRESSION = false;
+    
     private OverthereConnection connection;
 
     public CifsConnectionBuilder(String type, ConnectionOptions options, AddressPortMapper mapper) {
@@ -223,6 +240,9 @@ public class CifsConnectionBuilder implements OverthereConnectionBuilder {
         case WINRM:
             connection = new CifsWinRmConnection(type, options, mapper);
             break;
+        case WINRS:
+        	connection = new CifsWinrsConnection(type, options, mapper);
+        	break;
         default:
             throw new IllegalArgumentException("Unknown CIFS connection type " + cifsConnectionType);
         }
