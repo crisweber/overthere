@@ -27,9 +27,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import com.google.common.io.Closeables;
-
 import com.xebialabs.overthere.CmdLine;
 import com.xebialabs.overthere.ConnectionOptions;
 import com.xebialabs.overthere.Overthere;
@@ -43,6 +44,8 @@ import com.xebialabs.overthere.spi.AddressPortMapper;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.xebialabs.overthere.OperatingSystemFamily.WINDOWS;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.CIFS_PROTOCOL;
+import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_CONTEXT;
+import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_ENABLE_HTTPS;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_ENVELOP_SIZE;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_HTTPS_CERTIFICATE_TRUST_STRATEGY;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_HTTPS_HOSTNAME_VERIFICATION_STRATEGY;
@@ -51,6 +54,8 @@ import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_K
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_KERBEROS_USE_HTTP_SPN;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_LOCALE;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.DEFAULT_WINRM_TIMEOUT;
+import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.WINRM_CONTEXT;
+import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.WINRM_ENABLE_HTTPS;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.WINRM_ENVELOP_SIZE;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.WINRM_HTTPS_CERTIFICATE_TRUST_STRATEGY;
 import static com.xebialabs.overthere.cifs.CifsConnectionBuilder.WINRM_HTTPS_HOSTNAME_VERIFICATION_STRATEGY;
@@ -226,7 +231,7 @@ public class CifsWinRmConnection extends CifsConnection {
     }
 
     private WinRmClient createWinrmClient() {
-        final WinRmClient client = new WinRmClient(username, password, createWinrmURL(options), unmappedAddress, unmappedPort);
+        final WinRmClient client = new WinRmClient(username, password, createWinrmURL(), unmappedAddress, unmappedPort);
         client.setWinRmTimeout(options.get(WINRM_TIMEMOUT, DEFAULT_WINRM_TIMEOUT));
         client.setWinRmEnvelopSize(options.get(WINRM_ENVELOP_SIZE, DEFAULT_WINRM_ENVELOP_SIZE));
         client.setWinRmLocale(options.get(WINRM_LOCALE, DEFAULT_WINRM_LOCALE));
@@ -236,6 +241,16 @@ public class CifsWinRmConnection extends CifsConnection {
         client.setKerberosAddPortToSpn(options.getBoolean(WINRM_KERBEROS_ADD_PORT_TO_SPN, DEFAULT_WINRM_KERBEROS_ADD_PORT_TO_SPN));
         client.setKerberosDebug(options.getBoolean(WINRM_KERBEROS_DEBUG, DEFAULT_WINRM_KERBEROS_DEBUG));
         return client;
+    }
+
+    private URL createWinrmURL() {
+        final String scheme = options.getBoolean(WINRM_ENABLE_HTTPS, DEFAULT_WINRM_ENABLE_HTTPS) ? "https" : "http";
+        final String context = options.get(WINRM_CONTEXT, DEFAULT_WINRM_CONTEXT);
+        try {
+            return new URL(scheme, address, port, context);
+        } catch (MalformedURLException e) {
+            throw new WinRmRuntimeIOException("Cannot build a new URL for " + this, e);
+        }
     }
 
 }

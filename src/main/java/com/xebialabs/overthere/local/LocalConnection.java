@@ -22,17 +22,23 @@
  */
 package com.xebialabs.overthere.local;
 
-import com.xebialabs.overthere.*;
+import java.io.File;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.xebialabs.overthere.CmdLine;
+import com.xebialabs.overthere.ConnectionOptions;
+import com.xebialabs.overthere.Overthere;
+import com.xebialabs.overthere.OverthereConnection;
+import com.xebialabs.overthere.OverthereFile;
+import com.xebialabs.overthere.OverthereProcess;
+import com.xebialabs.overthere.RuntimeIOException;
 import com.xebialabs.overthere.spi.AddressPortMapper;
 import com.xebialabs.overthere.spi.BaseOverthereConnection;
 import com.xebialabs.overthere.spi.OverthereConnectionBuilder;
 import com.xebialabs.overthere.spi.Protocol;
 import com.xebialabs.overthere.util.DefaultAddressPortMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
 
 import static com.xebialabs.overthere.ConnectionOptions.OPERATING_SYSTEM;
 import static com.xebialabs.overthere.ConnectionOptions.TEMPORARY_DIRECTORY_PATH;
@@ -105,17 +111,12 @@ public class LocalConnection extends BaseOverthereConnection implements Overther
 
     @Override
     public OverthereProcess startProcess(CmdLine commandLine) {
-        logger.info("Executing command {} on {}", commandLine, this);
-        try {
-            final ProcessBuilder pb = new ProcessBuilder(commandLine.toCommandArray(os, false));
-            if (workingDirectory != null) {
-                pb.directory(((LocalFile) workingDirectory).getFile());
-            }
-            final Process p = pb.start();
-            return new LocalProcess(p);
-        } catch (IOException exc) {
-            throw new RuntimeIOException("Cannot start process for " + commandLine, exc);
+        logger.info("Executing command [{}] on [{}]", commandLine, this);
+        File wd = null;
+        if (workingDirectory != null) {
+            wd = ((LocalFile) workingDirectory).getFile();
         }
+        return LocalProcess.fromCommandLine(commandLine, wd, os);
     }
 
     @Override
