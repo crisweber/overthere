@@ -45,7 +45,7 @@ public class CifsWinrsConnection extends CifsConnection {
         winrs.addArgument("-username:" + username);
         winrs.addPassword("-password:" + password);
         if (workingDirectory != null) {
-            winrs.addArgument("-directory:" + workingDirectory);
+            winrs.addArgument("-directory:" + workingDirectory.getPath());
         }
         if (options.getBoolean(WINRS_NOECHO, DEFAULT_WINRS_NOECHO)) {
             winrs.addArgument("-noecho");
