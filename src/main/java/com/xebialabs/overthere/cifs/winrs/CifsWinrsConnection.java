@@ -38,7 +38,8 @@ public class CifsWinrsConnection extends CifsConnection {
 
     @Override
     public OverthereProcess startProcess(final CmdLine commandLine) {
-        logger.info("Executing command [{}] on [{}]", commandLine, this);
+        logger.info("Starting command [{}] on [{}]", commandLine.toCommandLine(os, true), this);
+
         final CmdLine winrs = new CmdLine();
         winrs.addArgument("winrs");
         winrs.addArgument("-remote:" + address + ":" + port);

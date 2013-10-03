@@ -25,7 +25,7 @@ public class LocalProcess implements OverthereProcess {
 
     public static LocalProcess fromCommandLine(CmdLine commandLine, File workingDirectory, OperatingSystemFamily os) {
         try {
-            logger.debug("Creating " + os + " process with command line [{}]", commandLine);
+            logger.debug("Creating " + os + " process with command line [{}]", commandLine.toCommandLine(os, true));
             final ProcessBuilder pb = new ProcessBuilder(commandLine.toCommandArray(os, false));
             if(workingDirectory != null) {
                 logger.debug("Setting working directory to [{}]", workingDirectory);
